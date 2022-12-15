@@ -1,0 +1,14 @@
+# [optional] to synchronize system time of nodes with 'chrony' 
+- hosts:
+  - control_plane
+  - work_node
+  - chrony
+  roles:
+  - { role: chrony, when: "groups['chrony']|length > 0" }
+
+# prepare tasks for all nodes
+- hosts:
+  - control_plane
+  - work_node
+  roles:
+  - prepare

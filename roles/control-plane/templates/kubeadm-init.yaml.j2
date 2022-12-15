@@ -1,0 +1,176 @@
+---
+kind: InitConfiguration
+apiVersion: kubeadm.k8s.io/v1beta3
+bootstrapTokens:
+- groups:
+  - system:bootstrappers:kubeadm:default-node-token
+  token: ajmdef.0j1j5n6789agcjef
+  ttl: 6h0m0s
+  usages:
+  - signing
+  - authentication
+localAPIEndpoint:
+  advertiseAddress: {{ inventory_hostname }}
+  bindPort: {{ SECURE_PORT }}
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+  imagePullPolicy: IfNotPresent
+  #name: node-{{ inventory_hostname }}
+  taints: []
+skipPhases: []
+#  - addon/coredns
+
+---
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta3
+certificatesDir: /etc/kubernetes/pki
+clusterName: kubernetes 
+controlPlaneEndpoint: {{ CONTROL_PLANE_ENDPOINT }} 
+dns: {}
+etcd:
+  external:
+    endpoints:
+{% for h in groups['control_plane'] %}
+    - "https://{{ h }}:2379"
+{% endfor %}
+    caFile: "{{ ca_dir }}/etcd-ca.pem"
+    certFile: "{{ ca_dir }}/etcd.pem" 
+    keyFile: "{{ ca_dir }}/etcd-key.pem"
+imageRepository: easzlab.io.local:5000
+kubernetesVersion: "{{ K8S_VER }}"
+networking:
+  dnsDomain: {{ CLUSTER_DNS_DOMAIN }}
+  podSubnet: {{ CLUSTER_CIDR }}
+  serviceSubnet: {{ SERVICE_CIDR }}
+apiServer:
+  extraArgs:
+    authorization-mode: "Node,RBAC"
+  certSANs:
+    - "{{ inventory_hostname }}"
+{% for h in MASTER_CERT_HOSTS %}
+    - "{{ h }}"
+{% endfor %}
+  timeoutForControlPlane: 4m0s
+controllerManager:
+  extraArgs:
+    "node-cidr-mask-size": "{{ NODE_CIDR_LEN }}"
+scheduler:
+  extraArgs: {}
+
+---
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+bindAddress: 0.0.0.0
+bindAddressHardFail: false
+clientConnection:
+  acceptContentTypes: ""
+  burst: 0
+  contentType: ""
+  kubeconfig: /var/lib/kube-proxy/kubeconfig.conf
+  qps: 0
+clusterCIDR: "{{ CLUSTER_CIDR }}"
+configSyncPeriod: 0s
+conntrack:
+  maxPerCore: null
+  min: null
+  tcpCloseWaitTimeout: null
+  tcpEstablishedTimeout: null
+detectLocal:
+  bridgeInterface: ""
+  interfaceNamePrefix: ""
+detectLocalMode: ""
+enableProfiling: false
+healthzBindAddress: "0.0.0.0:10256"
+hostnameOverride: "{{ inventory_hostname }}"
+iptables:
+  masqueradeAll: false
+  masqueradeBit: null
+  minSyncPeriod: 0s
+  syncPeriod: 0s
+ipvs:
+  excludeCIDRs: null
+  minSyncPeriod: 0s
+  scheduler: ""
+  strictARP: false
+  syncPeriod: 0s
+  tcpFinTimeout: 0s
+  tcpTimeout: 0s
+  udpTimeout: 0s
+metricsBindAddress: "0.0.0.0:10249"
+mode: "{{ PROXY_MODE }}"
+nodePortAddresses: null
+oomScoreAdj: null
+portRange: ""
+showHiddenMetricsForVersion: ""
+udpIdleTimeout: 0s
+
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+address: 0.0.0.0
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 2m0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 5m0s
+    cacheUnauthorizedTTL: 30s
+cgroupDriver: systemd
+clusterDNS:
+- {{ CLUSTER_DNS_SVC_IP }}
+clusterDomain: {{ CLUSTER_DNS_DOMAIN }}
+containerLogMaxFiles: 3
+containerLogMaxSize: 10Mi
+cpuManagerReconcilePeriod: 0s
+eventBurst: 10
+eventRecordQPS: 5
+evictionHard:
+  imagefs.available: 15%
+  memory.available: 300Mi
+  nodefs.available: 10%
+  nodefs.inodesFree: 5%
+evictionPressureTransitionPeriod: 5m0s
+failSwapOn: true
+fileCheckFrequency: 40s
+hairpinMode: hairpin-veth
+healthzBindAddress: 0.0.0.0
+healthzPort: 10248
+httpCheckFrequency: 40s
+imageGCHighThresholdPercent: 85
+imageGCLowThresholdPercent: 80
+imageMinimumGCAge: 2m0s
+kubeAPIBurst: 100
+kubeAPIQPS: 50
+makeIPTablesUtilChains: true
+maxOpenFiles: 1000000
+maxPods: {{ MAX_PODS }}
+nodeLeaseDurationSeconds: 40
+nodeStatusReportFrequency: 1m0s
+nodeStatusUpdateFrequency: 10s
+oomScoreAdj: -999
+podPidsLimit: -1
+port: 10250
+# disable readOnlyPort
+readOnlyPort: 0
+logging:
+  flushFrequency: 0
+  options:
+    json:
+      infoBufferSize: "0"
+  verbosity: 0
+memorySwap: {}
+resolvConf: /run/systemd/resolve/resolv.conf
+rotateCertificates: true
+runtimeRequestTimeout: 0s
+shutdownGracePeriod: 0s
+shutdownGracePeriodCriticalPods: 0s
+staticPodPath: /etc/kubernetes/manifests
+streamingConnectionIdleTimeout: 0s
+syncFrequency: 0s
+volumeStatsAggPeriod: 0s

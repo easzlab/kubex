@@ -1,0 +1,43 @@
+- name: 创建work_node 相关目录
+  file: name={{ item }} state=directory
+  with_items:
+  - /var/lib/kubelet
+  - /etc/systemd/system/kubelet.service.d
+  - /opt/cni/bin
+  - /etc/kubernetes
+
+- name: 下载 kubelet,kubeadm,kubectl 二进制
+  copy: src={{ base_dir }}/bin/{{ item }} dest={{ bin_dir }}/{{ item }} mode=0755
+  with_items:
+  - kubeadm
+  - kubectl
+  - kubelet
+
+- name: 下载 cni plugins 二进制
+  copy: src={{ item }} dest=/opt/cni/bin/ mode=0755
+  with_fileglob:
+  - "{{ base_dir }}/bin/cni/*"
+
+- debug: var="CLUSTER_DNS_SVC_IP"
+
+- name: 创建kubelet的systemd unit文件1
+  template: src=kubelet.service.j2 dest=/etc/systemd/system/kubelet.service
+
+- name: 创建kubelet的systemd unit文件2
+  template: src=10-kubeadm.conf.j2 dest=/etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+
+- name: 开机启用kubelet 服务
+  shell: "systemctl enable kubelet || echo true"
+
+- name: 开启kubelet 服务
+  shell: systemctl daemon-reload && systemctl restart kubelet
+
+- name: 创建kubeadm-init 配置文件
+  template: src=kubeadm-init.yaml.j2 dest=/etc/kubernetes/kubeadm-init.yaml
+
+- name: 执行kubeadm init 
+  shell: "{{ bin_dir }}/kubeadm init --config=/etc/kubernetes/kubeadm-init.yaml >> \
+	   /etc/kubernetes/kubeadm-init-log-`date +'%Y%m%d%H%M%S'`.log 2>&1"
+
+- name: 复制kubectl kubeconfig
+  shell: "cat /etc/kubernetes/admin.conf > ~/.kube/config"

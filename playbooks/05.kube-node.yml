@@ -1,0 +1,5 @@
+# to set up 'work_node' nodes
+- hosts: work_node
+  roles:
+  - { role: kube-lb, when: "inventory_hostname not in groups['control_plane']" }
+  - { role: kube-node, when: "inventory_hostname not in groups['control_plane']" }

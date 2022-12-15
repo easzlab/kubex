@@ -1,0 +1,19 @@
+# to clean 'control_plane' nodes
+- name: stop and disable control_plane service
+  service: name={{ item }} state=stopped enabled=no
+  with_items:
+  - kube-apiserver
+  - kube-controller-manager
+  - kube-scheduler
+  ignore_errors: true
+  when: "inventory_hostname in groups['control_plane']"
+
+- name: remove files and dirs of 'control_plane' nodes
+  file: name={{ item }} state=absent
+  with_items:
+  - "/var/run/kubernetes"
+  - "/etc/systemd/system/kube-apiserver.service"
+  - "/etc/systemd/system/kube-controller-manager.service"
+  - "/etc/systemd/system/kube-scheduler.service"
+  ignore_errors: true
+  when: "inventory_hostname in groups['control_plane']"

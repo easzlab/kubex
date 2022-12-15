@@ -1,0 +1,2 @@
+# default values
+CLUSTER_DNS_SVC_IP: "{{ SERVICE_CIDR.split('.')[0] }}.{{ SERVICE_CIDR.split('.')[1] }}.{{ SERVICE_CIDR.split('.')[2] }}.{{ SERVICE_CIDR.split('.')[3]|int + 10 }}"

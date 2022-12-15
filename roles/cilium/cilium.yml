@@ -1,0 +1,5 @@
+- hosts:
+  - control_plane
+  - work_node
+  roles:
+  - cilium

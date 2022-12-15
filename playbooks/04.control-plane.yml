@@ -1,0 +1,4 @@
+# to set up 'control_plane' nodes
+- hosts: control_plane
+  roles:
+  - control-plane 

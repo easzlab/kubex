@@ -1,0 +1,4 @@
+# to install etcd cluster
+- hosts: control_plane 
+  roles:
+  - etcd

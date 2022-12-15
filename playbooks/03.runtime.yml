@@ -1,0 +1,6 @@
+# to install a container runtime
+- hosts:
+  - control_plane
+  - work_node
+  roles:
+  - containerd 

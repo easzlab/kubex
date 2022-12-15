@@ -1,0 +1,12 @@
+# download directory
+down/*
+
+# binaries directory
+bin/*
+
+# role based variable settings, exclude roles/os-harden/vars/
+#/roles/*/vars/*
+#!/roles/os-harden/vars/
+
+# cluster instances
+clusters/
